@@ -1,0 +1,63 @@
+create table publisher(name varchar(40) primary key,address varchar(40),phone varchar(10));
+create table book(bookid integer primary key,title varchar(40),pubName varchar(40),Foreign key(pubName) references publisher(name));
+create table bookauthor(bookid integer,authorname varchar(40),Foreign Key (bookid) references book(bookid),primary key(bookid,authorname));
+create table librarybranch(branchid integer primary key,branchname varchar(40),address varchar(40));
+create table borrower(cardno integer primary key,name varchar(40),address varchar(40),phone varchar(10));
+create table bookcopies(bookid integer,branchid integer,no_copies integer,Foreign key(bookid) references book(bookid),Foreign key(branchid) references librarybranch(branchid),primary key(bookid,branchid));
+create table bookloans(bookid integer,branchid integer,cardno integer,dateout date,duedate date,Foreign key(bookid) references book(bookid),Foreign key(branchid) references librarybranch(branchid),Foreign key(cardno) references borrower(cardno),primary key(bookid,branchid,cardno));
+
+insert into publisher values('TMH','Paris','8827479784');
+insert into publisher values('DPU','London','8827479786');
+insert into publisher values('Times','HongKong','8827479788');
+
+insert into book values('21','The Lost Tribe','TMH');
+insert into book values('22','The Fiction','DPU');
+insert into book values('23','Three Hunks','DPU');
+insert into book values('24','Me','Times');
+
+insert into bookauthor values('21','J.Daniels');
+insert into bookauthor values('22','Stephen King');
+insert into bookauthor values('23','Stephen King');
+insert into bookauthor values('24','Stephen King');
+
+insert into librarybranch values('41','Sharpstown','NY');
+insert into librarybranch values('42','Central','US');	
+insert into librarybranch values('43','LoslibrAry','LA');	
+
+insert into borrower values('51','Alex','LA','9876543210');
+insert into borrower values('52','Peter','NY','9876543211');
+insert into borrower values('53','John','NY','9876543212');
+
+insert into bookcopies values('21','41','5');
+insert into bookcopies values('21','42','6');
+insert into bookcopies values('21','43','7');
+insert into bookcopies values('22','41','2');
+insert into bookcopies values('23','42','11');
+insert into bookcopies values('24','42','21');	
+
+insert into bookloans values('21','41','52',NULL,'2016-09-05');	
+insert into bookloans values('22','41','52',NULL,'2016-09-01');	
+insert into bookloans values('23','42','53',NULL,'2016-09-01');
+insert into bookloans values('22','41','53','2016-09-01','2016-09-13');	
+insert into bookloans values('21','41','51','2016-08-01','2016-09-01');
+insert into bookloans values('22','42','51','2016-08-01','2016-09-01');
+insert into bookloans values('23','43','51','2016-08-01','2016-09-01');	
+insert into bookloans values('24','42','51','2016-08-01','2016-09-01');	
+
+
+select b.title,bc.no_copies from book b,bookcopies bc where b.bookid=bc.bookid and b.title="The Lost Tribe" and bc.branchid=(select branchid from librarybranch where branchname="Sharpstown");
+select l.branchname,bc.no_copies from book b,librarybranch l,bookcopies bc where b.bookid=bc.bookid and l.branchid=bc.branchid and b.title="The Lost Tribe";
+
+........ 
+Retrieve the names of all borrowers who do not have any books checked out.
+........
+
+select booktitle.title,borrowerdetails.name,borrowerdetails.address from book booktitle,borrower borrowerdetails,bookloans bl,librarybranch l where l.branchname="Sharpstown" and duedate=curdate() and bl.bookid=booktitle.bookid and bl.cardno=borrowerdetails.cardno;
+select l.branchname as "BranchName",count(bl.bookid) as "No_Of_Books" from bookloans bl,librarybranch l where l.branchid=bl.branchid group by bl.branchid; 
+select bookname.title as "BookName",bookname.pubName ,count(bl.bookid) as "No_Of_Books" from book bookname,bookloans bl where bl.cardno in(select cardno from bookloans where dateout is not NULL group by cardno having count(cardno)>=3) and bl.bookid=bookname.bookid group by bl.cardno,bookname.title;
+select booktitle.title,bookcopiesdetails.no_copies from bookcopies bookcopiesdetails,librarybranch l,bookauthor ba,book booktitle where bookcopiesdetails.branchid=l.branchid and l.branchname="Central" and ba.bookid=bookcopiesdetails.bookid and ba.authorname="Stephen King" and booktitle.bookid=bookcopiesdetails.bookid;
+
+
+
+
+
